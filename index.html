@@ -4,24 +4,36 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Touch Grass · a pocket outdoor planner</title>
-  <meta name="description" content="Plan in 30 seconds, spend the rest outside. An outdoor planner that runs an open-weight model (Gemma 2) entirely in your browser." />
+  <meta name="description" content="Plan in 30 seconds, spend the rest outside. Gemma 2 runs entirely in your browser, works offline, and nothing you type leaves your phone." />
   <meta name="theme-color" content="#1f3d2b" />
+  <meta property="og:title" content="Touch Grass · plan in 30 seconds, spend the rest outside" />
+  <meta property="og:description" content="An outdoor planner that runs the open-weight Gemma 2 model on your own device. Offline, private, free." />
+  <meta property="og:image" content="https://ess-cor.github.io/touch-grass-chennai/screenshots/01-plan.png" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <main id="plan-view">
-    <header>
-      <h1>Touch Grass <span aria-hidden="true">🌿</span></h1>
+    <header class="hero">
+      <div class="brand"><img src="icon.svg" alt="" width="44" height="44" /><h1>Touch Grass</h1></div>
       <p class="lede">Plan in 30 seconds. Spend the rest outside.</p>
+      <div class="pills">
+        <span class="pill">🔒 On-device AI</span>
+        <span class="pill">📴 Works offline</span>
+        <span class="pill">🆓 No account, no server</span>
+      </div>
     </header>
 
-    <form id="form" autocomplete="off">
-      <label class="field">
-        <span>Where are you?</span>
-        <input id="city" name="city" value="Chennai" maxlength="60" />
-      </label>
+    <form id="form" class="card" autocomplete="off">
+      <div class="field">
+        <label for="city">Where are you?</label>
+        <div class="inline">
+          <input id="city" name="city" value="Chennai" maxlength="60" />
+          <button type="button" id="wx-btn" class="ghost small" title="Fetch current weather from Open-Meteo (open data, no key)">☁️ Live weather</button>
+        </div>
+        <p id="wx" class="hint" aria-live="polite"></p>
+      </div>
 
       <fieldset class="field">
         <legend>How long do you have?</legend>
@@ -44,63 +56,102 @@
         </div>
       </fieldset>
 
-      <label class="field">
-        <span>What's it like out there?</span>
-        <select id="conditions" name="conditions">
-          <option value="clear">Clear / sunny</option>
-          <option value="cloudy" selected>Cloudy, pleasant</option>
-          <option value="hot">Very hot</option>
-          <option value="drizzle">Light rain</option>
-          <option value="storm">Heavy rain / storm</option>
-        </select>
-      </label>
+      <fieldset class="field">
+        <legend>What's it like out there?</legend>
+        <div class="chips" id="conditions">
+          <label><input type="radio" name="conditions" value="clear" /><span>☀️ Sunny</span></label>
+          <label><input type="radio" name="conditions" value="cloudy" checked /><span>⛅ Pleasant</span></label>
+          <label><input type="radio" name="conditions" value="hot" /><span>🥵 Very hot</span></label>
+          <label><input type="radio" name="conditions" value="drizzle" /><span>🌦️ Light rain</span></label>
+          <label><input type="radio" name="conditions" value="storm" /><span>⛈️ Storm</span></label>
+        </div>
+      </fieldset>
 
-      <label class="field">
-        <span>Anything else? <small>(optional)</small></span>
+      <div class="field">
+        <label for="note">Anything else? <small>(optional)</small></label>
         <input id="note" name="note" maxlength="120" placeholder="e.g. I have a toddler with me, no car" />
-      </label>
+      </div>
 
       <button type="submit" class="primary" id="go">Plan my time outside</button>
     </form>
 
-    <section id="ai" class="card subtle" aria-live="polite">
-      <div id="ai-status">Checking whether this device can run the model…</div>
+    <section id="ai" class="card model" aria-live="polite">
+      <div class="model-head"><span class="dot" id="ai-dot"></span><b>On-device model</b></div>
+      <div id="ai-status" class="muted">Checking whether this device can run the model…</div>
       <div id="ai-actions" class="row" hidden>
-        <button type="button" id="load-gemma">Load Gemma 2 2B <small>(≈1.4 GB, once)</small></button>
-        <button type="button" id="load-lite" class="ghost">Lite: Qwen2.5 0.5B <small>(≈270 MB)</small></button>
+        <button type="button" id="load-gemma" class="primary">Load Gemma 2 2B <small>≈1.4 GB, once</small></button>
+        <button type="button" id="load-lite" class="ghost">Lite: Qwen2.5 0.5B <small>≈270 MB</small></button>
       </div>
       <progress id="ai-progress" max="1" value="0" hidden></progress>
+      <p class="hint" id="sample-wrap">No WebGPU here? <a href="#" id="sample-link">See a real Gemma 2 plan</a> recorded with the same prompt.</p>
     </section>
 
-    <section id="result" class="card" hidden aria-live="polite">
+    <section id="result" class="card result" hidden aria-live="polite">
       <p class="source" id="source"></p>
-      <ol id="steps"></ol>
+      <h2 id="plan-title"></h2>
+      <p class="why" id="why"></p>
+      <ol id="steps" class="steps"></ol>
+      <div id="spot-wrap">
+        <h3>Spot these <small id="spot-note"></small></h3>
+        <ul id="spot" class="spot"></ul>
+      </div>
       <p class="tip" id="tip"></p>
-      <pre id="stream" hidden></pre>
+      <div class="bring" id="bring"></div>
+      <div id="stream-wrap" hidden>
+        <p class="muted small-text" id="stream-label">Writing JSON, token by token…</p>
+        <pre id="stream" class="stream"></pre>
+      </div>
+      <details id="raw-wrap" hidden><summary>See the raw JSON the model wrote</summary><pre id="raw" class="stream"></pre></details>
       <button type="button" class="primary big" id="start">Go outside →</button>
     </section>
 
     <section id="log" class="card subtle" hidden></section>
 
     <footer>
-      <p>Runs an open-weight model in your browser with <a href="https://github.com/mlc-ai/web-llm">WebLLM</a>. Your answers never leave this device. Works offline once loaded.</p>
+      <p>Gemma 2 runs in your browser through <a href="https://github.com/mlc-ai/web-llm">WebLLM</a>. Your answers, your city and your walk log never leave this device. Weather is fetched from <a href="https://open-meteo.com/">Open-Meteo</a> only if you tap the button.</p>
       <p><a href="https://github.com/ess-cor/touch-grass-chennai">Source on GitHub</a> · MIT licence</p>
     </footer>
   </main>
 
   <main id="outside-view" hidden>
     <p class="go-label">Phone in your pocket. Off you go.</p>
-    <div id="timer" class="timer" role="timer">30:00</div>
-    <ul id="checklist" class="checklist"></ul>
+    <div class="ring-wrap">
+      <svg viewBox="0 0 120 120" class="ring" aria-hidden="true">
+        <circle cx="60" cy="60" r="52" class="ring-bg" />
+        <circle cx="60" cy="60" r="52" class="ring-fg" id="ring-fg" />
+      </svg>
+      <div id="timer" class="timer" role="timer">30:00</div>
+    </div>
+    <h2 id="out-title" class="out-title"></h2>
+    <div class="out-cols">
+      <section>
+        <h3>Spot</h3>
+        <ul id="spot-check" class="checklist"></ul>
+      </section>
+      <section>
+        <h3>Bring</h3>
+        <ul id="checklist" class="checklist"></ul>
+      </section>
+    </div>
     <ol id="mini-steps" class="mini-steps"></ol>
-    <label class="field back-note">
-      <span>Saw something good? <small>(optional, stays on this phone)</small></span>
+    <div class="field back-note">
+      <label for="back-note">Saw something good? <small>(optional, stays on this phone)</small></label>
       <input id="back-note" maxlength="120" placeholder="e.g. two kingfishers by the lake" />
-    </label>
+    </div>
     <div class="row">
       <button type="button" class="primary" id="back">I'm back</button>
       <button type="button" class="ghost" id="cancel">Cancel</button>
     </div>
+  </main>
+
+  <main id="card-view" hidden>
+    <h2 class="card-head">Nice. You touched grass. 🌿</h2>
+    <canvas id="walk-card" class="walk-card" aria-label="Your walk card"></canvas>
+    <div class="row">
+      <button type="button" class="primary" id="share">Share walk card</button>
+      <button type="button" class="ghost" id="done">Done</button>
+    </div>
+    <p class="hint center">The card is drawn on your phone. Nothing is uploaded unless you share it.</p>
   </main>
 
   <script type="module" src="app.js"></script>

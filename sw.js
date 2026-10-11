@@ -1,12 +1,15 @@
 // sw.js: caches the app shell and the WebLLM library so the app opens with no signal.
 // (Model weights are cached separately by WebLLM itself, in the browser's Cache Storage.)
-const CACHE = "touch-grass-v1";
+const CACHE = "touch-grass-v2";
 const SHELL = [
   "./",
   "./index.html",
   "./style.css",
   "./app.js",
   "./planner.js",
+  "./weather.js",
+  "./card.js",
+  "./samples.js",
   "./manifest.webmanifest",
   "./icon.svg",
   "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/lib/index.js",
@@ -27,7 +30,7 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   const ours = url.origin === self.location.origin || url.href.startsWith("https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@");
-  if (e.request.method !== "GET" || !ours) return; // leave model downloads to WebLLM
+  if (e.request.method !== "GET" || !ours) return; // leave model downloads and weather to the network
   // Network first for our own files (so updates land), cache as fallback when offline.
   e.respondWith(
     fetch(e.request)
