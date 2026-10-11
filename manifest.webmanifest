@@ -1,0 +1,13 @@
+{
+  "name": "Touch Grass",
+  "short_name": "Touch Grass",
+  "description": "Plan in 30 seconds, spend the rest outside. On-device AI, works offline.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f3ea",
+  "theme_color": "#1f3d2b",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

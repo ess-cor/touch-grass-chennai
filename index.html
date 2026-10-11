@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Touch Grass · a pocket outdoor planner</title>
+  <meta name="description" content="Plan in 30 seconds, spend the rest outside. An outdoor planner that runs an open-weight model (Gemma 2) entirely in your browser." />
+  <meta name="theme-color" content="#1f3d2b" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main id="plan-view">
+    <header>
+      <h1>Touch Grass <span aria-hidden="true">🌿</span></h1>
+      <p class="lede">Plan in 30 seconds. Spend the rest outside.</p>
+    </header>
+
+    <form id="form" autocomplete="off">
+      <label class="field">
+        <span>Where are you?</span>
+        <input id="city" name="city" value="Chennai" maxlength="60" />
+      </label>
+
+      <fieldset class="field">
+        <legend>How long do you have?</legend>
+        <div class="chips" id="minutes">
+          <label><input type="radio" name="minutes" value="15" /><span>15 min</span></label>
+          <label><input type="radio" name="minutes" value="30" checked /><span>30 min</span></label>
+          <label><input type="radio" name="minutes" value="60" /><span>1 hr</span></label>
+          <label><input type="radio" name="minutes" value="120" /><span>2 hr</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend>What do you feel like?</legend>
+        <div class="chips" id="interests">
+          <label><input type="checkbox" name="interests" value="birding" /><span>🐦 Birding</span></label>
+          <label><input type="checkbox" name="interests" value="walking" checked /><span>🚶 Walking</span></label>
+          <label><input type="checkbox" name="interests" value="gardening" /><span>🌱 Gardening</span></label>
+          <label><input type="checkbox" name="interests" value="beach" /><span>🌊 Beach</span></label>
+          <label><input type="checkbox" name="interests" value="cycling" /><span>🚲 Cycling</span></label>
+        </div>
+      </fieldset>
+
+      <label class="field">
+        <span>What's it like out there?</span>
+        <select id="conditions" name="conditions">
+          <option value="clear">Clear / sunny</option>
+          <option value="cloudy" selected>Cloudy, pleasant</option>
+          <option value="hot">Very hot</option>
+          <option value="drizzle">Light rain</option>
+          <option value="storm">Heavy rain / storm</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Anything else? <small>(optional)</small></span>
+        <input id="note" name="note" maxlength="120" placeholder="e.g. I have a toddler with me, no car" />
+      </label>
+
+      <button type="submit" class="primary" id="go">Plan my time outside</button>
+    </form>
+
+    <section id="ai" class="card subtle" aria-live="polite">
+      <div id="ai-status">Checking whether this device can run the model…</div>
+      <div id="ai-actions" class="row" hidden>
+        <button type="button" id="load-gemma">Load Gemma 2 2B <small>(≈1.4 GB, once)</small></button>
+        <button type="button" id="load-lite" class="ghost">Lite: Qwen2.5 0.5B <small>(≈270 MB)</small></button>
+      </div>
+      <progress id="ai-progress" max="1" value="0" hidden></progress>
+    </section>
+
+    <section id="result" class="card" hidden aria-live="polite">
+      <p class="source" id="source"></p>
+      <ol id="steps"></ol>
+      <p class="tip" id="tip"></p>
+      <pre id="stream" hidden></pre>
+      <button type="button" class="primary big" id="start">Go outside →</button>
+    </section>
+
+    <section id="log" class="card subtle" hidden></section>
+
+    <footer>
+      <p>Runs an open-weight model in your browser with <a href="https://github.com/mlc-ai/web-llm">WebLLM</a>. Your answers never leave this device. Works offline once loaded.</p>
+      <p><a href="https://github.com/ess-cor/touch-grass-chennai">Source on GitHub</a> · MIT licence</p>
+    </footer>
+  </main>
+
+  <main id="outside-view" hidden>
+    <p class="go-label">Phone in your pocket. Off you go.</p>
+    <div id="timer" class="timer" role="timer">30:00</div>
+    <ul id="checklist" class="checklist"></ul>
+    <ol id="mini-steps" class="mini-steps"></ol>
+    <label class="field back-note">
+      <span>Saw something good? <small>(optional, stays on this phone)</small></span>
+      <input id="back-note" maxlength="120" placeholder="e.g. two kingfishers by the lake" />
+    </label>
+    <div class="row">
+      <button type="button" class="primary" id="back">I'm back</button>
+      <button type="button" class="ghost" id="cancel">Cancel</button>
+    </div>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
